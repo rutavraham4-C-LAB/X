@@ -2,43 +2,55 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>שלבי לוח הכפל - נקי</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>לוח הכפל לנייד</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f8fafc; padding: 20px; }
-        .stats { display: flex; gap: 30px; margin-bottom: 20px; font-weight: bold; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        h2 { color: #1e293b; margin-bottom: 10px; }
-        table { border-collapse: separate; border-spacing: 2px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
-        td { width: 45px; height: 45px; text-align: center; border: none; background: white; transition: 0.2s; }
+        body { 
+            font-family: system-ui, sans-serif; 
+            display: flex; flex-direction: column; align-items: center; 
+            background-color: #f8fafc; margin: 0; padding: 10px;
+            touch-action: manipulation; /* מונע זום בנגיעות כפולות */
+        }
+        h2 { font-size: 1.2rem; margin: 10px 0; color: #1e293b; }
+        .stats { 
+            display: flex; gap: 10px; margin-bottom: 10px; 
+            font-size: 0.85rem; background: white; padding: 10px; 
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        }
+        table { border-collapse: collapse; background: white; width: 100%; max-width: 400px; }
+        td { 
+            width: 9%; /* התאמה ל-11 עמודות */
+            aspect-ratio: 1/1; 
+            text-align: center; border: 1px solid #e2e8f0; 
+            font-size: 0.8rem; padding: 0;
+        }
         .header { background-color: #3b82f6; color: white; font-weight: bold; }
         
-        /* הסרת חיצים בשדות מספר */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-
         input { 
-            width: 100%; height: 100%; text-align: center; font-size: 1.1rem; 
-            border: none; outline: none; background: #f1f5f9; cursor: pointer;
+            width: 100%; height: 100%; text-align: center; 
+            font-size: 0.9rem; border: none; outline: none; 
+            background: #f1f5f9; appearance: none; -webkit-appearance: none;
+            border-radius: 0;
         }
-        input:focus { background: #dbeafe; }
-        input.correct { background-color: #22c55e !important; color: white; font-weight: bold; }
+        /* ביטול חיצים */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        input.correct { background-color: #22c55e !important; color: white; }
         input.wrong { background-color: #ef4444 !important; color: white; }
         
-        .msg-area { margin-top: 20px; text-align: center; }
-        #currentErrors { color: #ef4444; }
+        #currentErrors { color: #ef4444; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h2>שלב: <span id="levelDisp">1</span></h2>
     <div class="stats">
-        <div>חוסרים בשורה: <span id="holesDisp">2</span></div>
+        <div>חוסרים: <span id="holesDisp">2</span></div>
         <div>פסילות: <span id="failsDisp">0</span>/3</div>
-        <div>טעויות בלוח: <span id="currentErrors">0</span></div>
+        <div>טעויות: <span id="currentErrors">0</span></div>
     </div>
 
     <div id="table-container"></div>
-    <div id="feedback" class="msg-area"></div>
 
     <script>
         let currentLevel = 1;
@@ -65,7 +77,6 @@
 
             for (let r = 1; r <= 10; r++) {
                 html += `<tr><td class="header">${r}</td>`;
-                
                 let holeIndices = [];
                 while(holeIndices.length < holesPerRow) {
                     let rand = Math.floor(Math.random() * 10) + 1;
@@ -75,8 +86,7 @@
                 for (let c = 1; c <= 10; c++) {
                     const ans = r * c;
                     if (holeIndices.includes(c)) {
-                        // שימוש ב-inputmode כדי להקפיץ מקלדת מספרים בנייד בלי החיצים
-                        html += `<td><input type="number" inputmode="numeric" data-ans="${ans}" oninput="check(this)"></td>`;
+                        html += `<td><input type="number" pattern="[0-9]*" inputmode="numeric" data-ans="${ans}" oninput="check(this)"></td>`;
                         remainingInBoard++;
                     } else {
                         html += `<td>${ans}</td>`;
@@ -93,18 +103,14 @@
 
             if (val === ans) {
                 el.classList.add('correct');
-                el.classList.remove('wrong');
                 el.disabled = true;
                 remainingInBoard--;
-                if (remainingInBoard === 0) setTimeout(handleWin, 300);
-            } else {
-                // רק אם הוקלד מספר באורך המתאים והוא טעות
-                if (el.value.length >= ans.toString().length) {
-                    el.classList.add('wrong');
-                    errorsInCurrentBoard++;
-                    document.getElementById('currentErrors').innerText = errorsInCurrentBoard;
-                    setTimeout(() => { el.value = ''; el.classList.remove('wrong'); }, 600);
-                }
+                if (remainingInBoard === 0) setTimeout(handleWin, 500);
+            } else if (el.value.length >= ans.toString().length) {
+                el.classList.add('wrong');
+                errorsInCurrentBoard++;
+                document.getElementById('currentErrors').innerText = errorsInCurrentBoard;
+                setTimeout(() => { el.value = ''; el.classList.remove('wrong'); }, 600);
             }
         }
 
@@ -112,15 +118,13 @@
             if (errorsInCurrentBoard > 10) {
                 totalFails++;
                 if (totalFails >= 3) {
-                    alert("צברת 3 פסילות. חוזרים לרמה 1!");
-                    currentLevel = 1;
-                    holesPerRow = 2;
-                    totalFails = 0;
+                    alert("3 פסילות. חוזרים לרמה 1!");
+                    currentLevel = 1; holesPerRow = 2; totalFails = 0;
                 } else {
-                    alert(`סיימת עם ${errorsInCurrentBoard} טעויות. זו פסילה! (נשארו ${3-totalFails} הזדמנויות)`);
+                    alert(`פסילה! (יותר מ-10 טעויות)`);
                 }
             } else {
-                alert("כל הכבוד! עלית לשלב הבא.");
+                alert("כל הכבוד! עוברים לשלב הבא");
                 currentLevel++;
                 if (holesPerRow < 10) holesPerRow++;
             }
